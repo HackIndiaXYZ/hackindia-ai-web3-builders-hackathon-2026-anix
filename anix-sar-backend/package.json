@@ -1,0 +1,21 @@
+{
+  "name": "anix-sar-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongoose": "^8.24.4",
+    "multer": "^2.3.0",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

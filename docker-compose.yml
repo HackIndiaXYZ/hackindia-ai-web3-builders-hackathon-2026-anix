@@ -1,0 +1,61 @@
+services:
+  backend:
+    build:
+      context: ./anix-sar-backend
+    ports:
+      - "4000:4000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/anix_sar_db
+      PORT: 4000
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_TIMEOUT_MS: 180000
+      MODEL_VERSION: 1.0.0-qxslab
+    volumes:
+      - anix_uploads:/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai_service/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      HF_HUB_OFFLINE: "0"
+      TRANSFORMERS_OFFLINE: "0"
+      MODEL_VERSION: 1.0.0-qxslab
+      UNCERTAINTY_SAMPLES: 8
+      UNCERTAINTY_NOISE_STD: 0.02
+    volumes:
+      - ./checkpoints:/app/checkpoints:ro
+      - ./src:/app/src:ro
+      - ${HF_CACHE_DIR:-${USERPROFILE}/.cache/huggingface}:/root/.cache/huggingface:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - anix_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\")'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  anix_data:
+  anix_uploads:
